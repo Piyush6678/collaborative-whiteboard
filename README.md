@@ -1,84 +1,100 @@
-# Turborepo starter
+# Collaborative Whiteboard
 
-This Turborepo starter is maintained by the Turborepo core team.
+A real-time collaborative whiteboard application built with **Next.js**, **Express**, **WebSockets**, and **PostgreSQL** in a **Turborepo** monorepo.
 
-## Using this example
+## 🚀 Features
 
-Run the following command:
+-   **Real-time Collaboration**: Draw shapes and chat with users in the same room instantly.
+-   **Authentication**: Secure Signup and Signin using JWT.
+-   **Modern UI**: Sleek, dark-themed interface built with Tailwind CSS.
+-   **Monorepo Architecture**: Shared configuration and types across frontend and backend.
+-   **Scalable Backend**: Separate HTTP and WebSocket services.
 
-```sh
-npx create-turbo@latest
+## 🛠️ Tech Stack
+
+-   **Monorepo**: Turborepo, pnpm
+-   **Frontend**: Next.js 15, React 19, Tailwind CSS, Axios
+-   **HTTP Backend**: Express.js, Node.js
+-   **WebSocket Backend**: `ws` library, Node.js
+-   **Database**: PostgreSQL, Prisma ORM
+-   **Shared Packages**:
+    -   `@repo/common`: Shared Zod schemas and types
+    -   `@repo/db`: Prisma client and schema
+    -   `@repo/backend-common`: Shared backend configuration (JWT secrets)
+
+## 📂 Project Structure
+
+```text
+.
+├── apps
+│   ├── excelidraw-frontend  # Next.js Frontend Application
+│   ├── http-backend         # REST API (Auth, Room management)
+│   └── ws-backend           # WebSocket Server (Real-time events)
+└── packages
+    ├── common               # Shared types/schemas (Zod)
+    ├── db                   # Database schema and client
+    ├── backend-common       # Shared backend config
+    └── ...                  # Other configs (ESLint, TS, UI)
 ```
 
-## What's inside?
+## ⚡ Getting Started
 
-This Turborepo includes the following packages/apps:
+### Prerequisites
 
-### Apps and Packages
+-   Node.js (v18+)
+-   pnpm (`npm install -g pnpm`)
+-   PostgreSQL Database
 
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
+### Installation
 
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
+1.  **Clone the repository**:
+    ```bash
+    git clone <repository-url>
+    cd collaborative-whiteboard
+    ```
 
-### Utilities
+2.  **Install dependencies**:
+    ```bash
+    pnpm install
+    ```
 
-This Turborepo has some additional tools already setup for you:
+3.  **Configure Environment Variables**:
+    *   **Database**: Create `packages/db/.env`:
+        ```env
+        DATABASE_URL="postgresql://user:password@localhost:5432/mydb?schema=public"
+        ```
+    *   **Apps**: Create `.env` in `apps/http-backend/` and `apps/ws-backend/` (or copy from `packages/db`):
+        ```env
+        DATABASE_URL="postgresql://user:password@localhost:5432/mydb?schema=public"
+        ```
 
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
+4.  **Database Setup**:
+    Generate the Prisma client:
+    ```bash
+    npx prisma generate
+    # If running locally for the first time, push schema to DB:
+    # npx prisma db push
+    ```
 
-### Build
+### Running the App
 
-To build all apps and packages, run the following command:
+Start all services (Frontend, HTTP Backend, WS Backend) concurrently:
 
-```
-cd my-turborepo
-pnpm build
-```
-
-### Develop
-
-To develop all apps and packages, run the following command:
-
-```
-cd my-turborepo
+```bash
 pnpm dev
 ```
 
-### Remote Caching
+-   **Frontend**: [http://localhost:3000](http://localhost:3000)
+-   **HTTP Backend**: [http://localhost:3001](http://localhost:3001)
+-   **WS Backend**: `ws://localhost:8080`
 
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
+## 🔄 Basic Flow
 
-Turborepo can use a technique known as [Remote Caching](https://turborepo.com/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
-
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
-
-```
-cd my-turborepo
-npx turbo login
-```
-
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
-
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
-
-```
-npx turbo link
-```
-
-## Useful Links
-
-Learn more about the power of Turborepo:
-
-- [Tasks](https://turborepo.com/docs/crafting-your-repository/running-tasks)
-- [Caching](https://turborepo.com/docs/crafting-your-repository/caching)
-- [Remote Caching](https://turborepo.com/docs/core-concepts/remote-caching)
-- [Filtering](https://turborepo.com/docs/crafting-your-repository/running-tasks#using-filters)
-- [Configuration Options](https://turborepo.com/docs/reference/configuration)
-- [CLI Usage](https://turborepo.com/docs/reference/command-line-reference)
+1.  **User Visits Frontend**: Lands on the Landing/Auth page.
+2.  **Sign Up/In**: Communicates with `http-backend` to verify credentials and issue a JWT.
+3.  **Create/Join Room**: User creates a room via `http-backend` (REST) and receives a `roomId`.
+4.  **Connect to Room**: Frontend connects to `ws-backend` via WebSocket, authenticating with the JWT.
+5.  **Collaboration**:
+    -   User actions (draw, chat) are sent as messages to `ws-backend`.
+    -   `ws-backend` broadcasts messages to all other users in the same `roomId`.
+    -   Chat history is persisted to Postgres via Prisma.

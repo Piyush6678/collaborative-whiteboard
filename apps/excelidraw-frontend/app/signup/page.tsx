@@ -17,10 +17,10 @@ export default function Signup() {
     })
         console.log(response?.data)
         router.push("/signin")
-}catch(e){
+}catch(e:any){
 
         console.log(e);
-        alert("something went wrong")
+        alert(e.response?.data?.message || "something went wrong")
     }
     
     }

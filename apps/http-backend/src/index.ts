@@ -1,5 +1,6 @@
 import express from "express"
 import jwt from "jsonwebtoken"
+import bcrypt from "bcrypt"
 import { JWT_SECRET } from "@repo/backend-common/config";
 import {prismaClient} from "@repo/db/client"
 import cors from "cors"
@@ -17,22 +18,24 @@ if(!parsedData.success){
      res.status(403).json({message:"incorrect credentials"})
      return 
 }
-//hash the passwrod
+
 
 const {username,password,name} =parsedData.data
+const hashedpassword= await bcrypt.hash(password,4);
 try{
 const user=await prismaClient.user.create({
     data:{email:username,
-        password,
+        password:hashedpassword,
         name}
         
     
 })
 res.json({userId:user.id})
 } catch(e){
-    res.status(411).json({message:"user already exist"})
+    console.error("Signup error:", e);
+    res.status(411).json({message: "Signup failed: " + (e as Error).message})
 }
-//
+
 
 })
 app.post("/signin",async (req,res)=>{
@@ -47,13 +50,17 @@ const {username,password} = parsedData.data
 const user = await prismaClient.user.findFirst({
 where:{
     email:username,
-    password
+    
 }
 })
 if(!user){
     res.status(403).json({message:"unauthorized"})
 return
 }
+ const hashedpassword= await bcrypt.compare(password,user.password);
+    if(!hashedpassword){
+        res.send("invalid password")
+    }
    
     const token=jwt.sign({
         userId:user?.id
@@ -67,8 +74,8 @@ app.post("/room", middleware, async (req,res)=>{
         return
     }
 
-    //@ts-ignore
 
+//@ts-ignore
     const userId = req.userId;
     try{ 
     const room=await prismaClient.room.create({
@@ -77,7 +84,7 @@ app.post("/room", middleware, async (req,res)=>{
             adminId:userId
         }
     })
-    //db call
+    
 res.json({
     roomId:room.id
 })}
